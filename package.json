@@ -11,13 +11,19 @@
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^5.2.0",
+    "@tinymce/tinymce-vue": "^2.1.0",
+    "axios": "^0.19.0",
     "core-js": "^2.6.5",
     "register-service-worker": "^1.6.2",
     "roboto-fontface": "*",
+    "vee-validate": "^2.2.11",
     "vue": "^2.6.10",
+    "vue-meta": "^2.0.4",
     "vue-router": "^3.0.3",
+    "vuedraggable": "^2.23.0",
     "vuetify": "^1.5.5",
-    "vuex": "^3.0.1"
+    "vuex": "^3.0.1",
+    "vuex-router-sync": "^5.0.0"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "^3.8.0",
