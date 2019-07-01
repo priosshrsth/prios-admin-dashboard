@@ -1,6 +1,7 @@
 import Vue from 'vue'
 import Vuetify from 'vuetify/lib'
 import 'vuetify/src/stylus/app.styl'
+import { icons as fontAwesomeIcons, fontAwesomeDom } from './fontawesome'
 
 Vue.use(Vuetify, {
     theme: {
@@ -15,5 +16,8 @@ Vue.use(Vuetify, {
     options: {
         customProperties: true
     },
-    iconfont: 'fa'
+    iconfont: ['mdi', 'faSvg'],
+    icons: fontAwesomeIcons
 })
+
+fontAwesomeDom.watch()
