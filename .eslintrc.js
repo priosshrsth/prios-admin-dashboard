@@ -1,21 +1,22 @@
 module.exports = {
-  root: true,
+    root: true,
 
-  env: {
-    node: true
-  },
+    env: {
+        node: true,
+    },
 
-  rules: {
-    'no-console': 'off',
-    'no-debugger': 'off'
-  },
+    rules: {
+        'no-console': 'off',
+        'no-debugger': 'off',
+        'no-unused-vars': 'off',
+    },
 
-  parserOptions: {
-    parser: 'babel-eslint'
-  },
+    parserOptions: {
+        parser: 'babel-eslint',
+    },
 
-  'extends': [
-    'plugin:vue/essential',
-    '@vue/prettier'
-  ]
-};
+    'extends': [
+        'plugin:vue/essential',
+        '@vue/prettier',
+    ],
+}

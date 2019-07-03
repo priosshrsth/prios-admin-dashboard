@@ -2,7 +2,7 @@ import swal from 'sweetalert'
 
 const defaults = {
     closeOnClickOutside: false,
-    closeOnEsc: true
+    closeOnEsc: true,
 }
 swal.setDefaults(defaults)
 
@@ -14,16 +14,16 @@ let deleteOptions = {
             text: 'Cancel',
             value: false,
             visible: true,
-            className: 'primary'
+            className: 'primary',
         },
         delete: {
             text: 'Delete',
             value: true,
             visible: true,
-            className: 'error'
-        }
+            className: 'error',
+        },
     },
-    dangerMode: true
+    dangerMode: true,
 }
 
 let updateOptions = {
@@ -34,16 +34,35 @@ let updateOptions = {
             text: 'Cancel',
             value: false,
             visible: true,
-            className: 'error'
+            className: 'error',
         },
         delete: {
             text: 'Update',
             value: true,
             visible: true,
-            className: 'primary'
-        }
+            className: 'primary',
+        },
     },
-    dangerMode: true
+}
+
+let createOptions = {
+    text: 'Do you want to save data?',
+    icon: 'warning',
+    buttons: {
+        cancel: {
+            text: 'Cancel',
+            value: false,
+            visible: true,
+            className: 'error',
+        },
+        delete: {
+            text: 'Create',
+            value: true,
+            visible: true,
+            className: 'primary',
+        },
+    },
+    dangerMode: true,
 }
 
 function handleArguements(arguements, defaultOptions) {
@@ -65,17 +84,18 @@ function handleArguements(arguements, defaultOptions) {
 }
 
 export const confirmDelete = function() {
-    console.log(arguments)
     let options = handleArguements(arguments, deleteOptions)
     return swal(options)
 }
 
 export const confirmUpdate = function() {
-    console.log(arguments)
     let options = handleArguements(arguments, updateOptions)
     return swal(options)
 }
 
-export default swal
+export const confirmCreate = function() {
+    let options = handleArguements(arguments, createOptions)
+    return swal(options)
+}
 
-confirmUpdate()
+export default swal
