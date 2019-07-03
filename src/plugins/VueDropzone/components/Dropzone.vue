@@ -22,13 +22,22 @@
             </div>
 
             <div class="card-container">
-                Hello
+                <img
+                    v-for="(file, key) in files"
+                    :key="key"
+                    :src="file.src"
+                    :alt="file.alt"
+                />
             </div>
         </div>
     </div>
 </template>
 
 <script>
+import File from '../src/File'
+
+let FILES = []
+
 export default {
     name: 'VueDropzone',
     props: {
@@ -73,10 +82,6 @@ export default {
         ajaxURL: {
             type: String,
         },
-        minCount: {
-            type: Number,
-            default: 0,
-        },
         required: {
             type: Boolean,
             default: false,
@@ -90,8 +95,10 @@ export default {
             default: false,
         },
         types: {
-            type: [Array, String],
-            default: 'images',
+            type: [Array],
+            default() {
+                return ['images']
+            },
         },
         filesize: {
             //size(bytes) for each file
@@ -107,7 +114,11 @@ export default {
             },
         },
         maxSize: {
-            //max allowed size(bytes) of the files
+            //max allowed size(MB) of the files
+            type: Number,
+            validator(size) {
+                return size > 0
+            },
         },
         imageSize: {
             //imageDimension
@@ -134,7 +145,7 @@ export default {
                 return value > 0
             },
         },
-        files: {
+        count: {
             //exact numbers of files
             type: Number,
             validator: function(value) {
@@ -142,6 +153,7 @@ export default {
             },
         },
         extensions: {
+            //list of allowed extension. this is prioritized over types
             type: [Array, String],
         },
     },
@@ -150,7 +162,44 @@ export default {
             draggable: true,
             fileReadable: true,
             dragActive: false,
+            localErrors: {
+                files: [],
+                extensions: [],
+                types: [],
+                imageSize: [],
+                maxSize: [],
+                fileSize: [],
+            },
+            localWarnings: {
+                multiple: [],
+                files: [],
+                min: [],
+                max: [],
+            },
+            files: [],
         }
+    },
+    computed: {
+        numberOfFiles() {
+            return FILES.length + this.files.length
+        },
+        localInfo() {
+            let info = {}
+            if (this.extensions || this.types) {
+                info.types = {
+                    label: 'Allowed Types',
+                    text: '',
+                }
+            }
+            return info
+        },
+        totalSize() {
+            let sum = 0
+            for (var i = 0; i < FILES.length; i++) {
+                sum += FILES[0].size
+            }
+            return sum
+        },
     },
     created() {
         let self = this
@@ -172,7 +221,16 @@ export default {
         filesDropped(event) {
             preventDefaults(event)
             this.dragActive = false
-            this.handleFilesDropEvent(event)
+            try {
+                let files = event.dataTransfer.files
+                for (let i = 0; i < files.length; i++) {
+                    FILES.push(files[i])
+                }
+                this.processFiles()
+            } catch (error) {
+                console.log(error)
+                this.errorMessages.push('Invalid objects provided!')
+            }
             this.$emit('filesDropped')
         },
         dragLeft(event) {
@@ -180,16 +238,68 @@ export default {
             this.dragActive = false
             this.$emit('dragLeft')
         },
-        handleFilesDropEvent(event) {
-            try {
-                let files = event.dataTransfer.files
+        async processFiles() {
+            let self = this
+            //await this.validateFiles()
+            console.log(FILES)
+            FILES.forEach(function(file, index) {
                 let reader = new FileReader()
-
-                this.handleFiles(files)
-            } catch (error) {
-                console.log(error)
-                this.errorMessages.push('Invalid objects provided!')
+                reader.onload = function(e) {
+                    self.files.push({
+                        src: e.target.result,
+                        name: file.name,
+                        size: file.size,
+                        alt: '',
+                    })
+                }
+                try {
+                    reader.readAsDataURL(file)
+                } catch (error) {
+                    console.log(error)
+                    console.log('index ', index, 'file', file)
+                }
+            })
+            FILES = []
+            //this.validateFiles(files)
+            //reader.readAsDataURL(files)
+        },
+        filesCounter() {
+            if (!this.multiple && this.numberOfFiles > 1) {
+                FILES = [FILES[0]]
+                this.warnings.multiple.push('Multiple Files are not allowed!')
             }
+            if (this.multiple) {
+                if (this.count) {
+                    //files prop comes into play here
+                    if (this.numberOfFiles !== this.count) {
+                        if (this.numberOfFiles > this.count) {
+                            FILES = FILES.slice(0, this.count)
+                        }
+                        this.localWarnings.files.push(
+                            `Exactly ${this.count} files are required!`
+                        )
+                    }
+                } else {
+                    if (this.min && this.numberOfFiles < this.min) {
+                        this.localWarnings.min.push(
+                            `${this.min - this.count} more files needed!`
+                        )
+                    }
+                    if (this.max && this.numberOfFiles > this.max) {
+                        FILES = FILES.slice(0, this.max)
+                        this.localWarnings.max.push(
+                            `Only upto ${this.max} files is needed!`
+                        )
+                    }
+                }
+            }
+        },
+        sizeChecker() {},
+        validateTypes() {},
+        async validateFiles() {
+            await this.filesCounter()
+            await this.validateTypes()
+            await this.sizeChecker()
         },
         handleFiles(files) {
             console.log(files)
@@ -197,9 +307,25 @@ export default {
     },
 }
 
+function limitFiles(files, count) {
+    return files.slice(0, count)
+}
+
 function preventDefaults(event) {
     event.preventDefault()
-    event.stopPropagation()
+    event.stopImmediatePropagation()
+}
+
+function formatBytes(bytes, decimals = 2) {
+    if (bytes === 0) return '0 Bytes'
+
+    const k = 1024
+    const dm = decimals < 0 ? 0 : decimals
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
+
+    const i = Math.floor(Math.log(bytes) / Math.log(k))
+
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i]
 }
 
 // function handleTypes(t) {
