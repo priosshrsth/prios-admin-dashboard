@@ -1,8 +1,8 @@
 <template>
-    <div>
+    <div ref="window" class="prios-dropzone-container">
         <div
             class="vue-dropzone"
-            :class="{ 'drag-on': dragActive }"
+            :class="{ 'drag-on': dragActive, resizable }"
             @dragover="draggedOver"
             @dragenter="dragEntered"
             @dragleave="dragLeft"
@@ -15,26 +15,61 @@
                     </div>
                 </div>
                 <div class="window-actions">
-                    <div class="span"></div>
-                    <div class="span"></div>
+                    <div class="span" @click="minimize"></div>
+                    <div class="span" @click="maximize"></div>
                     <div class="span"></div>
                 </div>
             </div>
 
-            <div class="card-container">
-                <img
-                    v-for="(file, key) in files"
-                    :key="key"
-                    :src="file.src"
-                    :alt="file.alt"
-                />
+            <div class="prios-card-container-outer">
+                <div
+                    class="prios-card-container-inner"
+                    @click="$refs.fallback.click()"
+                >
+                    <div
+                        class="prios-file-holder"
+                        @click.prevent="manageFile($event)"
+                        v-for="(file, key) in files"
+                        :key="key"
+                    >
+                        <div
+                            class="prios-img"
+                            :style="`background-image: url(${file.src})`"
+                        ></div>
+                        <div class="prios-file-name">{{ file.name }}</div>
+                    </div>
+                    <div
+                        class="empty-file-overlay"
+                        :class="{ 'display-on': files.length < 1 }"
+                    >
+                        <div class="fallback-helper-text">
+                            <em>Drag & Drop</em> your files here. Or Just
+                            <a
+                                href="javascript:void(0)"
+                                @click.prevent="$refs.fallback.click"
+                            >
+                                <em @click="$refs.fallback.click()"
+                                    >Click Anywhere</em
+                                ></a
+                            >
+                        </div>
+                    </div>
+                </div>
             </div>
+            <input
+                ref="fallback"
+                class="fallback"
+                type="file"
+                :name="name"
+                @change="filesDropped($event)"
+                :multiple="multiple"
+            />
         </div>
     </div>
 </template>
 
 <script>
-import File from '../src/File'
+import CustomFileReader from '../src/CustomFileReader'
 
 let FILES = []
 
@@ -92,7 +127,7 @@ export default {
         },
         resizable: {
             type: Boolean,
-            default: false,
+            default: true,
         },
         types: {
             type: [Array],
@@ -201,6 +236,11 @@ export default {
             return sum
         },
     },
+    watch: {
+        files(files) {
+            this.$emit('value', files)
+        },
+    },
     created() {
         let self = this
         let div = document.createElement('div')
@@ -222,10 +262,12 @@ export default {
             preventDefaults(event)
             this.dragActive = false
             try {
-                let files = event.dataTransfer.files
+                let files = event.target.files || event.dataTransfer.files
                 for (let i = 0; i < files.length; i++) {
                     FILES.push(files[i])
                 }
+                this.validateFiles()
+                this.$emit('getOriginalFiles', FILES)
                 this.processFiles()
             } catch (error) {
                 console.log(error)
@@ -240,25 +282,8 @@ export default {
         },
         async processFiles() {
             let self = this
-            //await this.validateFiles()
-            console.log(FILES)
-            FILES.forEach(function(file, index) {
-                let reader = new FileReader()
-                reader.onload = function(e) {
-                    self.files.push({
-                        src: e.target.result,
-                        name: file.name,
-                        size: file.size,
-                        alt: '',
-                    })
-                }
-                try {
-                    reader.readAsDataURL(file)
-                } catch (error) {
-                    console.log(error)
-                    console.log('index ', index, 'file', file)
-                }
-            })
+            self.files = new CustomFileReader(FILES).files
+            console.log(self.files)
             FILES = []
             //this.validateFiles(files)
             //reader.readAsDataURL(files)
@@ -294,6 +319,9 @@ export default {
                 }
             }
         },
+        manageFile(event) {
+            preventDefaults(event)
+        },
         sizeChecker() {},
         validateTypes() {},
         async validateFiles() {
@@ -303,6 +331,17 @@ export default {
         },
         handleFiles(files) {
             console.log(files)
+        },
+
+        //window related functinos
+        minimize() {},
+        maximize() {
+            let zone = this.$refs.window
+            console.log(zone)
+            let width = document.getClientWidth + 'px'
+            console.log(width)
+            let height = window.getClientHeight + 'px'
+            zone.style = `position: absolute;width: ${width}; height: ${height}`
         },
     },
 }

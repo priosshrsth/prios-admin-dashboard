@@ -1,4 +1,7 @@
 import './vuetify'
 import './sweetAlert'
 import './toastr'
-import './VueDropzone'
+
+import Vue from 'vue'
+import VueDropzone from './PriosDropzone'
+Vue.use(VueDropzone)

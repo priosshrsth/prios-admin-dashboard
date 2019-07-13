@@ -11,10 +11,8 @@
 </template>
 
 <script>
-import VueDropzone from '../../src/plugins/VueDropzone/components/Dropzone'
 export default {
     name: 'Media',
-    components: { VueDropzone },
 }
 </script>
 
